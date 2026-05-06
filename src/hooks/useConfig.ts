@@ -3,12 +3,16 @@ import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export interface SiteConfig {
+  memberName: string;
+  memberTitle: string;
   heroTitle: string;
   heroSubtitle: string;
   aboutText: string;
   email: string;
   githubUrl: string;
   linkedinUrl: string;
+  twitterUrl: string;
+  profileImageUrl: string;
 }
 
 export function useConfig() {
@@ -20,6 +24,9 @@ export function useConfig() {
       if (snapshot.exists()) {
         setConfig(snapshot.data() as SiteConfig);
       }
+      setLoading(false);
+    }, (error) => {
+      console.error("Config synchronization error:", error);
       setLoading(false);
     });
     return () => unsub();

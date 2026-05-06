@@ -1,97 +1,79 @@
 import React, { useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
-import { signInWithGoogle, auth } from '../../lib/firebase';
+import { ShieldCheck, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Login: React.FC = () => {
-  const { user, isAdmin, loading } = useAuth();
-  const [error, setError] = React.useState<string | null>(null);
-  const [rememberMe, setRememberMe] = React.useState(true);
+  const { isAdmin, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAdmin && !loading) {
-      navigate('/admin/projects');
+      navigate('/admin/projects', { replace: true });
     }
   }, [isAdmin, loading, navigate]);
 
-  const handleLogin = async () => {
-    setError(null);
-    try {
-      const user = await signInWithGoogle(rememberMe);
-      
-      // Explicitly check for the allowed email
-      if (user.email !== 'emperordante123@gmail.com') {
-        // Log them out immediately if they aren't the allowed user
-        await auth.signOut();
-        setError("ACCESS_DENIED: Critical identity mismatch. This incident has been logged.");
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to sign in. Please verify your connection.");
-    }
-  };
-
   if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center font-mono text-accent">
-      AUTHENTICATING...
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center font-mono text-accent">
+      <div className="flex flex-col items-center gap-6">
+        <Activity className="w-10 h-10 animate-pulse text-accent" />
+        <div className="space-y-2 text-center">
+          <p className="text-xs tracking-[0.4em] uppercase font-bold animate-pulse">Synchronizing_Core</p>
+          <p className="text-[10px] text-accent/40 font-mono italic">Initializing_Admin_Protocol_v4.2.0</p>
+        </div>
+      </div>
     </div>
   );
 
-  if (user && isAdmin) return <Navigate to="/admin" replace />;
+  // isAdmin logic is handled by the useEffect redirect above
+  // if isAdmin is still true here, it means navigate hasn't fired yet
+  if (isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <div className="max-w-md w-full border border-border bg-bg-card p-12 text-center">
-        <div className="inline-flex p-4 bg-accent/5 border border-accent/20 rounded-full mb-8">
-          <LogIn className="w-8 h-8 text-accent" />
+    <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-transparent">
+      <div className="w-full max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-20 h-20 border border-accent/20 bg-accent/5 mb-8 rounded-full">
+           <ShieldCheck className="w-10 h-10 text-accent animate-pulse" />
         </div>
-        <h1 className="text-3xl font-bold text-white mb-4 tracking-tighter uppercase">Admin Access</h1>
-        <p className="text-text-muted text-sm mb-12 font-light">
-          Unauthorized access attempts are logged and monitored. 
-          Use your primary engineering identity to proceed.
+        
+        <h1 className="text-3xl font-bold text-white tracking-tighter mb-4 italic">RESTRICTED_ACCESS</h1>
+        <p className="text-text-muted text-sm font-mono uppercase tracking-[0.2em] mb-12">
+          Identity Verification Required via System Terminal.
         </p>
 
-        {user && !isAdmin && (
-          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs text-left font-mono">
-            ERR: ACCESS_DENIED. <br/>
-            IDENTITY: {user.email} <br/>
-            STATUS: UNAUTHORIZED
+        <div className="space-y-8 p-10 border border-border bg-bg-card/50 backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-2">
+            <Activity className="w-3 h-3 text-accent" />
           </div>
-        )}
+          
+          <div className="text-left space-y-4">
+             <div className="flex items-start gap-4">
+                <div className="w-6 h-6 border border-accent text-accent flex items-center justify-center text-[10px] font-mono mt-1">1</div>
+                <div>
+                   <p className="text-[11px] text-white font-bold uppercase tracking-widest mb-1">Invoke Terminal</p>
+                   <p className="text-[10px] text-text-muted leading-relaxed">Press <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-white font-mono">ESC</kbd> or click the terminal icon on the main screen.</p>
+                </div>
+             </div>
 
-        {error && (
-          <div className="mb-8 p-4 bg-orange-500/10 border border-orange-500/20 text-orange-500 text-xs font-mono">
-            AUTH_ERROR: {error}
+             <div className="flex items-start gap-4">
+                <div className="w-6 h-6 border border-accent text-accent flex items-center justify-center text-[10px] font-mono mt-1">2</div>
+                <div>
+                   <p className="text-[11px] text-white font-bold uppercase tracking-widest mb-1">Execute Command</p>
+                   <p className="text-[10px] text-text-muted leading-relaxed">Type <code className="text-accent underline">su</code> and hit Enter.</p>
+                </div>
+             </div>
+
+             <div className="flex items-start gap-4">
+                <div className="w-6 h-6 border border-accent text-accent flex items-center justify-center text-[10px] font-mono mt-1">3</div>
+                <div>
+                   <p className="text-[11px] text-white font-bold uppercase tracking-widest mb-1">Auth_Challenge</p>
+                   <p className="text-[10px] text-text-muted leading-relaxed">Input the administrative passcode to decrypt the console.</p>
+                </div>
+             </div>
           </div>
-        )}
-
-        <div className="space-y-6">
-          <button 
-            onClick={handleLogin}
-            className="w-full py-4 bg-accent text-black font-bold uppercase tracking-widest text-[11px] hover:bg-white transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_-5px_rgba(var(--accent-rgb),0.3)]"
-          >
-            Authorize with Google
-          </button>
-
-          <label className="flex items-center justify-center gap-3 cursor-pointer group">
-            <div className="relative flex items-center justify-center w-5 h-5 border border-border bg-black group-hover:border-accent transition-colors">
-              <input 
-                type="checkbox" 
-                className="sr-only" 
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              {rememberMe && (
-                <div className="w-2.5 h-2.5 bg-accent" />
-              )}
-            </div>
-            <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest group-hover:text-accent transition-colors">Maintain_Persistent_Session</span>
-          </label>
         </div>
 
-        <a href="/" className="inline-block mt-12 text-[10px] font-mono text-text-muted hover:text-accent transition-colors uppercase tracking-widest">
+        <a href="/" className="inline-block mt-12 text-[10px] font-mono text-text-muted hover:text-accent transition-colors uppercase tracking-widest shadow-sm">
           &larr; Return to Central System
         </a>
       </div>

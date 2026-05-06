@@ -43,8 +43,10 @@ export const AdminDashboard: React.FC = () => {
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
 
   const handleLogout = () => {
-    auth.signOut();
+    // Clear terminal access
     localStorage.removeItem('term_access');
+    // Also sign out of firebase if any session existed
+    auth.signOut();
     navigate('/');
   };
 

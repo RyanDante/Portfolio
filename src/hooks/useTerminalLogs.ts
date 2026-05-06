@@ -30,6 +30,9 @@ export const useTerminalLogs = () => {
       })) as TerminalLog[];
       setLogs(docs);
       setLoading(false);
+    }, (error) => {
+      console.error("Terminal logs fetch error:", error);
+      setLoading(false);
     });
 
     return () => unsub();

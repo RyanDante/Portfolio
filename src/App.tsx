@@ -105,10 +105,19 @@ function Portfolio() {
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, loading } = useAuth();
+  const { isAdmin, loading } = useAuth();
   
-  if (loading) return <div>Authenticating...</div>;
-  if (!user || !isAdmin) return <Navigate to="/login" replace />;
+  if (loading) return (
+    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center font-mono text-accent">
+      <div className="relative">
+        <div className="w-16 h-16 border-2 border-accent/20 rounded-full animate-ping" />
+        <div className="absolute inset-0 w-16 h-16 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+      <span className="text-[10px] uppercase tracking-[0.5em] font-bold mt-8 animate-pulse text-glow">VERIFYING_CREDENTIALS...</span>
+    </div>
+  );
+
+  if (!isAdmin) return <Navigate to="/login" replace />;
   
   return <>{children}</>;
 }

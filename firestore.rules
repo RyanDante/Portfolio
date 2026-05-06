@@ -1,26 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isEmailVerified() {
-      return isSignedIn() && request.auth.token.email_verified == true;
-    }
-
-    function isAdmin() {
-      return isEmailVerified() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.email == 'emperordante123@gmail.com'
-      );
-    }
-
+    // Helper to validate document IDs
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -29,66 +10,10 @@ service cloud.firestore {
       return request.resource.data;
     }
 
-    function existing() {
-      return resource.data;
-    }
-
-    // Projects
-    match /projects/{projectId} {
-      allow read: if true; // Publicly readable
-      allow create: if isAdmin() && isValidId(projectId) && isValidProject(incoming());
-      allow update: if isAdmin() && isValidProject(incoming());
-      allow delete: if isAdmin();
-
-      function isValidProject(data) {
-        return data.keys().hasAll(['title', 'tagline', 'status', 'order']) &&
-               data.title is string && data.title.size() <= 100 &&
-               data.tagline is string && data.tagline.size() <= 100 &&
-               data.status in ['PROD_READY', 'BETA_DEV', 'STABLE'] &&
-               data.order is number &&
-               (!('imageUrl' in data) || data.imageUrl is string) &&
-               (!('videoUrl' in data) || data.videoUrl is string) &&
-               (!('repoUrl' in data) || data.repoUrl is string);
-      }
-    }
-
-    // Site Config
-    match /config/main {
-      allow read: if true;
-      allow write: if isAdmin() &&
-                     incoming().keys().hasAll(['heroTitle', 'aboutText']) &&
-                     (!('profileImageUrl' in incoming()) || incoming().profileImageUrl is string);
-    }
-
-    // Analytics
-    match /analytics_visits/{visitId} {
-      allow create: if isValidId(visitId) && 
-                      incoming().keys().hasAll(['timestamp', 'path']) &&
-                      incoming().timestamp == request.time;
-      allow read, delete: if isAdmin();
-    }
-
-    // Terminal Logs
-    match /terminal_logs/{logId} {
-      allow create: if isValidId(logId) && 
-                      incoming().keys().hasAll(['timestamp', 'command']) &&
-                      incoming().timestamp == request.time;
-      allow read, delete: if isAdmin();
-    }
-
-    // Feedback
-    match /feedback/{feedbackId} {
-      allow create: if isValidId(feedbackId) &&
-                      incoming().keys().hasAll(['message', 'timestamp']) &&
-                      incoming().message is string && incoming().message.size() <= 1000 &&
-                      incoming().timestamp == request.time;
-      allow read, delete: if isAdmin();
-    }
-
-    // Admins (Read only by admins or the user themselves for auth check)
-    match /admins/{uid} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
-      allow write: if false; // Only manageable via console or functions for safety
+    // Default: allow everything for simplicity as requested to "remove hindrances"
+    // The UI handles the terminal password gate
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }

@@ -24,7 +24,9 @@ export function useAnalytics() {
     const q = query(collection(db, 'analytics_visits'), orderBy('timestamp', 'desc'), limit(100));
     return onSnapshot(q, (snapshot) => {
       setRecentVisits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setVisitCount(snapshot.size); // This is only for the limited query, maybe more complex later
+      setVisitCount(snapshot.size); 
+    }, (error) => {
+      console.error("Analytics fetch error:", error);
     });
   };
 

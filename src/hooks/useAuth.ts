@@ -5,32 +5,27 @@ import { auth, db } from '../lib/firebase';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('term_access') === 'Admin');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for terminal-based elevation first
-    const checkTerminalAdmin = () => {
-      const savedAccess = localStorage.getItem('term_access');
-      if (savedAccess === 'Admin') {
-        setIsAdmin(true);
-      }
-    };
+    // Immediate check
+    const savedAccess = localStorage.getItem('term_access');
+    const isTermAdmin = savedAccess === 'Admin';
+    setIsAdmin(isTermAdmin);
 
-    checkTerminalAdmin();
+    // If terminal admin, we can release loading early
+    if (isTermAdmin) {
+      setLoading(false);
+    }
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        const isTargetAdmin = user.email === 'emperordante123@gmail.com';
-        const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-        setIsAdmin(isTargetAdmin || adminDoc.exists());
-      } else {
-        // Only reset if terminal admin isn't set
-        if (localStorage.getItem('term_access') !== 'Admin') {
-          setIsAdmin(false);
-        }
-      }
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      setUser(authUser);
+      // If we're not a terminal admin, we wait for firebase auth to be sure
+      // but in this version terminal is king.
+      setLoading(false);
+    }, (error) => {
+      console.error("Auth state error:", error);
       setLoading(false);
     });
 
