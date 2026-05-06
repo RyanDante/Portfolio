@@ -12,10 +12,17 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Check if user is the hardcoded admin or in admins collection
-        const isHardcodedAdmin = user.email === 'emperordante123@gmail.com';
+        // Enforce the specific admin email restricted in the request
+        const isTargetAdmin = user.email === 'emperordante123@gmail.com';
+        
+        // We still check Firestore for additional verification or fallback, 
+        // but the email check is the primary gatekeeper here.
         const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-        setIsAdmin(isHardcodedAdmin || adminDoc.exists());
+        setIsAdmin(isTargetAdmin || adminDoc.exists());
+        
+        // If they are logged in but NOT an admin, we might want to log them out 
+        // but useAuth is a hook, so we shouldn't perform side-effect signouts here 
+        // that could cause infinite loops. The Login component handles the initial gate.
       } else {
         setIsAdmin(false);
       }
