@@ -1,13 +1,20 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
-import { signInWithGoogle } from '../../lib/firebase';
+import { signInWithGoogle, auth } from '../../lib/firebase';
 import { useAuth } from '../../hooks/useAuth';
 
 export const Login: React.FC = () => {
   const { user, isAdmin, loading } = useAuth();
   const [error, setError] = React.useState<string | null>(null);
   const [rememberMe, setRememberMe] = React.useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAdmin && !loading) {
+      navigate('/admin/projects');
+    }
+  }, [isAdmin, loading, navigate]);
 
   const handleLogin = async () => {
     setError(null);

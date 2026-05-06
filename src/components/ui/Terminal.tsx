@@ -103,8 +103,14 @@ export const Terminal: React.FC = () => {
         setAccessLevel('Admin');
         localStorage.setItem('term_access', 'Admin');
         setIsPromptingPass(false);
-        setHistory(prev => [...prev, { input: '********', output: 'ACCESS_GRANTED: Welcome back, Etienne.' }]);
+        setHistory(prev => [...prev, { input: '********', output: 'ACCESS_GRANTED: Welcome back, Etienne. System core unlocked.' }]);
         logCommand('su (SUCCESS)', 'Elevated to Admin', true);
+        
+        // Auto-redirect to dashboard
+        setTimeout(() => {
+            setHistory(prev => [...prev, { input: '', output: 'INITIALIZING_ADMIN_CONSOLE...' }]);
+            setTimeout(() => navigate('/admin/projects'), 1000);
+        }, 1500);
       } else {
         setIsPromptingPass(false);
         setHistory(prev => [...prev, { input: '********', output: '<span class="text-red-500">ERR: AUTH_FAILURE. Incident recorded.</span>' }]);

@@ -44,6 +44,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleLogout = () => {
     auth.signOut();
+    localStorage.removeItem('term_access');
     navigate('/');
   };
 
