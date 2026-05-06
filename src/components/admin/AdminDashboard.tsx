@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, BarChart3, Settings, LogOut, ChevronRight, Plus, Trash2, Edit2, Save, X, Activity, Box, Terminal as TerminalIcon, ShieldCheck, Zap, Globe, Cpu, Database, Server, Code2, Monitor, Smartphone, Video, FileImage, MousePointer2, Users, MapPin, Radio, Wallet, MessageSquare, Utensils, User } from 'lucide-react';
+import { LayoutGrid, BarChart3, Settings, LogOut, ChevronRight, Plus, Trash2, Edit2, Save, X, Activity, Box, Terminal as TerminalIcon, ShieldCheck, Zap, Globe, Cpu, Database, Server, Code2, Monitor, Smartphone, Video, FileImage, MousePointer2, Users, MapPin, Radio, Wallet, MessageSquare, Utensils, User, Menu } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useProjectsContext } from '../../context/ProjectsContext';
 import { Project, ProjectStatus } from '../../types';
 import { auth, db } from '../../lib/firebase';
@@ -41,113 +42,129 @@ export const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    // Clear terminal access
     localStorage.removeItem('term_access');
-    // Also sign out of firebase if any session existed
     auth.signOut();
     navigate('/');
   };
 
+  const menuItems = [
+    { label: 'Dashboard', path: '/admin', icon: Activity },
+    { label: 'Project Cluster', path: '/admin/projects', icon: Box },
+    { label: 'Intelligence', path: '/admin/analytics', icon: BarChart3 },
+    { label: 'Identity Protocol', path: '/admin/identity', icon: User },
+    { label: 'Transmissions', path: '/admin/transmissions', icon: MessageSquare },
+    { label: 'System Health', path: '/admin/health', icon: ShieldCheck },
+  ];
+
+  const SidebarContent = () => (
+    <>
+      <div className="px-8 mb-12 hidden md:block">
+        <h2 className="text-xl font-bold text-white tracking-tighter">ADMIN.SYS</h2>
+        <p className="text-[10px] font-mono text-accent uppercase tracking-widest mt-1">Version 4.0.2</p>
+      </div>
+
+      <nav className="flex-1 p-4 space-y-2">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link 
+              key={item.path}
+              to={item.path} 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
+                location.pathname === item.path ? "bg-accent/10 text-accent font-bold" : "text-text-muted hover:bg-white/5"
+              )}
+            >
+              <Icon className="w-4 h-4" /> {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-border space-y-2">
+        <button 
+          onClick={() => {
+            setIsTerminalOpen(!isTerminalOpen);
+            setIsMobileMenuOpen(false);
+          }}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-3 transition-all text-sm font-bold uppercase tracking-widest border",
+            isTerminalOpen ? "bg-accent text-black border-accent" : "text-accent border-accent/20 hover:bg-accent/5"
+          )}
+        >
+          <TerminalIcon className="w-4 h-4" /> Terminal
+        </button>
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-500/5 transition-all text-sm font-bold uppercase tracking-widest"
+        >
+          <LogOut className="w-4 h-4" /> Terminate
+        </button>
+      </div>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-[#050505] flex">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-border flex flex-col pt-12">
-        <div className="px-8 mb-12">
-          <h2 className="text-xl font-bold text-white tracking-tighter">ADMIN.SYS</h2>
-          <p className="text-[10px] font-mono text-accent uppercase tracking-widest mt-1">Version 4.0.2</p>
+    <div className="min-h-screen bg-[#050505] flex flex-col md:flex-row overflow-hidden">
+      {/* Mobile Header */}
+      <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-[#050505] z-50">
+        <div className="flex flex-col">
+          <h2 className="text-sm font-bold text-white tracking-tighter">ADMIN.SYS</h2>
+          <span className="text-[8px] font-mono text-accent">v4.0.2</span>
         </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-accent"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </header>
 
-        <nav className="flex-1 p-4 space-y-2">
-          <Link 
-            to="/admin" 
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
-              location.pathname === '/admin' ? "bg-accent/10 text-accent font-bold" : "text-text-muted hover:bg-white/5"
-            )}
-          >
-            <Activity className="w-4 h-4" /> Dashboard
-          </Link>
-          <Link 
-            to="/admin/projects" 
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
-              location.pathname === '/admin/projects' ? "bg-accent/10 text-accent font-bold" : "text-text-muted hover:bg-white/5"
-            )}
-          >
-            <Box className="w-4 h-4" /> Project Cluster
-          </Link>
-          <Link 
-            to="/admin/analytics" 
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
-              location.pathname === '/admin/analytics' ? "bg-accent/10 text-accent" : "text-text-muted hover:bg-white/5"
-            )}
-          >
-            <BarChart3 className="w-4 h-4" /> Intelligence
-          </Link>
-          <Link 
-            to="/admin/identity" 
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
-              location.pathname === '/admin/identity' ? "bg-accent/10 text-accent font-bold" : "text-text-muted hover:bg-white/5"
-            )}
-          >
-            <User className="w-4 h-4" /> Identity Protocol
-          </Link>
-          <Link 
-            to="/admin/transmissions" 
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
-              location.pathname === '/admin/transmissions' ? "bg-accent/10 text-accent font-bold" : "text-text-muted hover:bg-white/5"
-            )}
-          >
-            <MessageSquare className="w-4 h-4" /> Transmissions
-          </Link>
-          <Link 
-            to="/admin/health" 
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-sm transition-all text-sm",
-              location.pathname === '/admin/health' ? "bg-accent/10 text-accent" : "text-text-muted hover:bg-white/5"
-            )}
-          >
-            <ShieldCheck className="w-4 h-4" /> System Health
-          </Link>
-        </nav>
-
-        <div className="p-4 border-t border-border space-y-2">
-          <button 
-            onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 transition-all text-sm font-bold uppercase tracking-widest border",
-              isTerminalOpen ? "bg-accent text-black border-accent" : "text-accent border-accent/20 hover:bg-accent/5"
-            )}
-          >
-            <TerminalIcon className="w-4 h-4" /> Terminal
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-500/5 transition-all text-sm font-bold uppercase tracking-widest"
-          >
-            <LogOut className="w-4 h-4" /> Terminate
-          </button>
-        </div>
+      {/* Sidebar Desktop */}
+      <aside className="hidden md:flex w-64 border-r border-border flex-col pt-12">
+        <SidebarContent />
       </aside>
 
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.aside 
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 top-[65px] z-40 bg-[#050505] md:hidden flex flex-col border-r border-border"
+          >
+            <SidebarContent />
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto no-scrollbar">
-        <Routes>
-          <Route path="/" element={<DashboardHome />} />
-          <Route path="/projects" element={<ProjectManager />} />
-          <Route path="/analytics" element={<AnalyticsDashboard />} />
-          <Route path="/identity" element={<IdentityEditor />} />
-          <Route path="/transmissions" element={<FeedbackDashboard />} />
-          <Route path="/health" element={<SystemHealth />} />
-        </Routes>
+      <main className="flex-1 overflow-y-auto no-scrollbar relative w-full h-full">
+        <motion.div
+           key={location.pathname}
+           initial={{ opacity: 0, y: 10 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.3 }}
+           className="w-full h-full"
+        >
+          <Routes>
+            <Route path="/" element={<DashboardHome />} />
+            <Route path="/projects" element={<ProjectManager />} />
+            <Route path="/analytics" element={<AnalyticsDashboard />} />
+            <Route path="/identity" element={<IdentityEditor />} />
+            <Route path="/transmissions" element={<FeedbackDashboard />} />
+            <Route path="/health" element={<SystemHealth />} />
+          </Routes>
+        </motion.div>
 
         {isTerminalOpen && (
-          <div className="fixed bottom-6 right-6 w-[500px] z-50 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="fixed bottom-4 right-4 left-4 md:left-auto md:bottom-6 md:right-6 md:w-[500px] z-[60] animate-in slide-in-from-bottom-4 duration-300">
             <div className="bg-black border border-accent shadow-[0_0_50px_-12px_rgba(var(--accent-rgb),0.3)]">
               <div className="flex items-center justify-between p-3 border-b border-accent/20 bg-accent/5">
                 <div className="flex items-center gap-2">
@@ -205,43 +222,43 @@ const DashboardHome = () => {
   ];
 
   return (
-    <div className="p-12">
-      <div className="mb-12">
-        <h2 className="text-4xl font-bold text-white tracking-tighter mb-4 uppercase italic">Admin_Terminal_Home</h2>
-        <p className="text-text-muted max-w-xl font-light">Welcome, Operator. All nodes functional. Select active module for synchronization.</p>
+    <div className="p-4 md:p-12">
+      <div className="mb-8 md:mb-12">
+        <h2 className="text-2xl md:text-4xl font-bold text-white tracking-tighter mb-4 uppercase italic">Admin_Terminal_Home</h2>
+        <p className="text-text-muted max-w-xl font-light text-sm md:text-base">Welcome, Operator. All nodes functional. Select active module for synchronization.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-12 md:mb-16">
         {modules.map(mod => (
           <button 
             key={mod.id}
             onClick={() => navigate(mod.path)}
-            className="p-8 bg-bg-card border border-border text-left hover:border-accent group transition-all"
+            className="p-6 md:p-8 bg-bg-card border border-border text-left hover:border-accent group transition-all"
           >
-            <div className="text-accent mb-6 bg-accent/5 w-fit p-3 border border-accent/20 group-hover:bg-accent group-hover:text-black transition-colors">
+            <div className="text-accent mb-4 md:mb-6 bg-accent/5 w-fit p-3 border border-accent/20 group-hover:bg-accent group-hover:text-black transition-colors">
               {mod.icon}
             </div>
-            <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tight">{mod.title}</h3>
-            <p className="text-sm text-text-muted leading-relaxed font-light">{mod.desc}</p>
+            <h3 className="text-lg md:text-xl font-bold text-white mb-2 uppercase tracking-tight">{mod.title}</h3>
+            <p className="text-xs md:text-sm text-text-muted leading-relaxed font-light">{mod.desc}</p>
           </button>
         ))}
       </div>
 
-      <div className="p-12 border border-dashed border-border flex items-center justify-between bg-accent/5">
-        <div className="flex items-center gap-6">
-          <div className="w-12 h-12 rounded-full border border-accent flex items-center justify-center text-accent">
-            <Activity className="w-6 h-6" />
+      <div className="p-6 md:p-12 border border-dashed border-border flex flex-col md:flex-row items-start md:items-center justify-between bg-accent/5 gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-accent flex items-center justify-center text-accent shrink-0">
+            <Activity className="w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
-            <div className="text-[10px] font-mono text-gray-500 uppercase">Live_Node_Traffic</div>
-            <div className="text-3xl font-bold text-white tracking-tighter">
-              {loading ? '---' : visitCount.toLocaleString()} <span className="text-xs text-text-muted font-normal">TOTAL_HITS</span>
+            <div className="text-[8px] md:text-[10px] font-mono text-gray-500 uppercase">Live_Node_Traffic</div>
+            <div className="text-xl md:text-3xl font-bold text-white tracking-tighter">
+              {loading ? '---' : visitCount.toLocaleString()} <span className="text-[10px] md:text-xs text-text-muted font-normal uppercase">TOTAL_HITS</span>
             </div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-[10px] font-mono text-gray-500 uppercase">System_Status</div>
-          <div className="text-accent font-mono text-xs mt-1">HEALTHY_STABLE</div>
+        <div className="text-left md:text-right">
+          <div className="text-[8px] md:text-[10px] font-mono text-gray-500 uppercase">System_Status</div>
+          <div className="text-accent font-mono text-[10px] md:text-xs mt-1">HEALTHY_STABLE</div>
         </div>
       </div>
     </div>
@@ -275,23 +292,23 @@ const ProjectManager = () => {
   };
 
   return (
-    <div className="p-12">
-      <div className="flex justify-between items-end mb-12">
+    <div className="p-4 md:p-12">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-8 md:mb-12 gap-6">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tighter mb-2 uppercase">Project Cluster</h2>
-          <p className="text-xs text-text-muted">Manage active build manifests and deployment states.</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tighter mb-2 uppercase">Project Cluster</h2>
+          <p className="text-[10px] md:text-xs text-text-muted uppercase tracking-widest">Manage active build manifests and deployment states.</p>
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="px-6 py-3 bg-accent text-black font-bold uppercase tracking-widest text-[10px] hover:bg-white transition-all flex items-center gap-3"
+          className="w-full md:w-auto px-6 py-3 bg-accent text-black font-bold uppercase tracking-widest text-[10px] hover:bg-white transition-all flex items-center justify-center gap-3"
         >
           <Plus className="w-4 h-4" /> New Deployment
         </button>
       </div>
 
       {projects.length === 0 && (
-        <div className="p-12 border border-border bg-bg-card text-center">
-          <p className="text-text-muted mb-8 italic">No projects found in the cluster. Bootstrap initial data?</p>
+        <div className="p-8 md:p-12 border border-border bg-bg-card text-center">
+          <p className="text-text-muted mb-8 italic text-sm">No projects found in the cluster. Bootstrap initial data?</p>
           <button 
             onClick={async () => {
               const { PROJECTS } = await import('../../data/mockData');
@@ -303,32 +320,32 @@ const ProjectManager = () => {
                 } as any);
               }
             }}
-            className="px-8 py-3 border border-accent text-accent hover:bg-accent hover:text-black transition-all font-mono text-[10px] uppercase tracking-widest"
+            className="w-full md:w-auto px-8 py-3 border border-accent text-accent hover:bg-accent hover:text-black transition-all font-mono text-[10px] uppercase tracking-widest"
           >
             Bootstrap_Cluster_v1
           </button>
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {projects.map(p => (
-          <div key={p.id} className="p-6 bg-bg-card border border-border flex items-center justify-between group hover:border-accent/40 transition-all">
-            <div className="flex items-center gap-6">
-              <div className="w-12 h-12 bg-white/5 border border-border flex items-center justify-center text-accent">
+          <div key={p.id} className="p-4 md:p-6 bg-bg-card border border-border flex flex-col md:flex-row md:items-center justify-between group hover:border-accent/40 transition-all gap-4">
+            <div className="flex items-center gap-4 md:gap-6">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border border-border flex items-center justify-center text-accent shrink-0">
                 {p.iconName}
               </div>
               <div>
-                <h4 className="text-lg font-bold text-white tracking-tight">{p.title}</h4>
+                <h4 className="text-base md:text-lg font-bold text-white tracking-tight">{p.title}</h4>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[10px] font-mono text-accent uppercase tracking-widest">{p.status}</span>
-                  <span className="text-[10px] text-text-muted font-mono">ORDER_{p.order}</span>
+                  <span className="text-[8px] md:text-[10px] font-mono text-accent uppercase tracking-widest">{p.status}</span>
+                  <span className="text-[8px] md:text-[10px] text-text-muted font-mono">ORDER_{p.order}</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-end">
               <button 
                 onClick={() => setEditingId(p.id)}
-                className="p-3 text-text-muted hover:text-white transition-all border border-transparent hover:border-border"
+                className="flex-1 md:flex-none p-3 text-text-muted hover:text-white transition-all border border-border md:border-transparent md:hover:border-border flex justify-center"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
@@ -341,7 +358,7 @@ const ProjectManager = () => {
                     alert('ERR: ACCESS_DENIED.');
                   }
                 }}
-                className="p-3 text-text-muted hover:text-red-500 transition-all border border-transparent hover:border-border"
+                className="flex-1 md:flex-none p-3 text-text-muted hover:text-red-500 transition-all border border-border md:border-transparent md:hover:border-border flex justify-center"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -392,52 +409,52 @@ const ProjectEditorCard = ({ project, onClose, isNew }: { project: any; onClose:
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
-      <div className="max-w-4xl w-full bg-[#080808] border border-border shadow-2xl flex flex-col h-[85vh]">
-        <div className="p-6 border-b border-border flex justify-between items-center bg-black/40">
-          <h3 className="text-white font-bold uppercase tracking-widest text-sm">Deployment Editor</h3>
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md">
+      <div className="max-w-4xl w-full bg-[#080808] border border-border shadow-2xl flex flex-col h-[90vh] md:h-[85vh]">
+        <div className="p-4 md:p-6 border-b border-border flex justify-between items-center bg-black/40">
+          <h3 className="text-white font-bold uppercase tracking-widest text-xs md:text-sm italic">Deployment_Editor</h3>
           <button onClick={onClose} className="p-2 text-text-muted hover:text-white transition-all"><X className="w-5 h-5" /></button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar bg-[#0a0a0a]">
-          <div className="grid grid-cols-2 gap-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 no-scrollbar bg-[#0a0a0a]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
             <div className="space-y-2">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Title</label>
+              <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Title</label>
               <input 
                 type="text" value={data.title} 
                 onChange={e => setData({...data, title: e.target.value})}
-                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
-                placeholder="Project name (e.g. MoMo Bridge)"
+                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
+                placeholder="Project_ID"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Tagline</label>
+              <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Tagline</label>
               <input 
                 type="text" value={data.tagline} 
                 onChange={e => setData({...data, tagline: e.target.value})}
-                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
-                placeholder="One-liner (e.g. Offline-first payment synchronizer)"
+                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
+                placeholder="System_Description"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-mono text-gray-500 uppercase">Description</label>
+            <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Description_Dump</label>
             <textarea 
               value={data.description} 
               onChange={e => setData({...data, description: e.target.value})}
-              className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm min-h-[100px]"
-              placeholder="Detailed project summary, goals, and outcomes..."
+              className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm min-h-[100px] font-mono"
+              placeholder="Detailed build logs..."
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
             <div className="space-y-2">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Status</label>
+              <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Status</label>
               <select 
                 value={data.status} 
                 onChange={e => setData({...data, status: e.target.value})}
-                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm uppercase"
+                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm uppercase font-mono"
               >
                 <option value="PROD_READY">PROD_READY</option>
                 <option value="BETA_DEV">BETA_DEV</option>
@@ -445,16 +462,16 @@ const ProjectEditorCard = ({ project, onClose, isNew }: { project: any; onClose:
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Order</label>
+              <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Priority_Order</label>
               <input 
                 type="number" value={data.order} 
                 onChange={e => setData({...data, order: parseInt(e.target.value)})}
-                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
+                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Visual Identity (Icon)</label>
-              <div className="grid grid-cols-4 gap-2">
+            <div className="md:col-span-3 space-y-4">
+              <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest block mb-4">Visual_Identity_Protocol (Icon)</label>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
                 {ICON_OPTIONS.map(opt => {
                     const Icon = opt.icon;
                     return (
@@ -462,12 +479,12 @@ const ProjectEditorCard = ({ project, onClose, isNew }: { project: any; onClose:
                             key={opt.name}
                             onClick={() => setData({...data, iconName: opt.name})}
                             className={cn(
-                                "flex flex-col items-center justify-center p-3 border transition-all gap-2",
+                                "flex flex-col items-center justify-center p-2 border transition-all gap-1.5",
                                 data.iconName === opt.name ? "border-accent bg-accent/10 text-accent" : "border-border text-gray-500 hover:border-gray-700"
                             )}
                         >
-                            <Icon className="w-5 h-5" />
-                            <span className="text-[8px] uppercase font-mono">{opt.name}</span>
+                            <Icon className="w-4 h-4" />
+                            <span className="text-[7px] uppercase font-mono tracking-tighter truncate w-full px-1">{opt.name}</span>
                         </button>
                     )
                 })}
@@ -731,52 +748,52 @@ const ProjectEditorCard = ({ project, onClose, isNew }: { project: any; onClose:
   };
 
   return (
-    <div className="p-12">
-      <div className="mb-12 flex justify-between items-end">
+    <div className="p-4 md:p-12">
+      <div className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-           <h2 className="text-3xl font-bold text-white tracking-tighter mb-2 uppercase">Intelligence Dashboard</h2>
-           <p className="text-xs text-text-muted">Real-time traffic ingestion and session telemetry.</p>
+           <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tighter mb-2 uppercase italic">Intelligence Dashboard</h2>
+           <p className="text-[10px] md:text-xs text-text-muted uppercase tracking-widest">Real-time traffic ingestion and session telemetry.</p>
         </div>
         <div className="flex gap-4">
-           <div className="text-right">
-              <div className="text-[9px] font-mono text-gray-500 uppercase tracking-widest">Global Rank</div>
-              <div className="text-lg font-bold text-white tracking-widest">DLA-X01</div>
+           <div className="text-left md:text-right">
+              <div className="text-[8px] md:text-[9px] font-mono text-gray-500 uppercase tracking-widest">Global Rank</div>
+              <div className="text-base md:text-lg font-bold text-white tracking-widest">DLA-X01</div>
            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        <div className="p-8 bg-bg-card border border-border group hover:border-accent/40 transition-all">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-12">
+        <div className="p-6 md:p-8 bg-bg-card border border-border group hover:border-accent/40 transition-all">
           <div className="flex justify-between items-start mb-4">
             <Users className="w-5 h-5 text-accent" />
             <span className="text-[9px] font-mono text-accent bg-accent/10 px-2 py-0.5 rounded-full">+12%</span>
           </div>
           <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Total_Visitors</p>
-          <h3 className="text-3xl font-bold text-white tracking-tighter">{visitCount}</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tighter">{visitCount}</h3>
         </div>
-        <div className="p-8 bg-bg-card border border-border group hover:border-blue-500/40 transition-all">
+        <div className="p-6 md:p-8 bg-bg-card border border-border group hover:border-blue-500/40 transition-all">
           <div className="flex justify-between items-start mb-4">
             <MousePointer2 className="w-5 h-5 text-blue-500" />
             <span className="text-[9px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">89%</span>
           </div>
           <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Session_Depth</p>
-          <h3 className="text-3xl font-bold text-white tracking-tighter">4.2</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tighter">4.2</h3>
         </div>
-        <div className="p-8 bg-bg-card border border-border group hover:border-orange-500/40 transition-all">
+        <div className="p-6 md:p-8 bg-bg-card border border-border group hover:border-orange-500/40 transition-all">
           <div className="flex justify-between items-start mb-4">
             <Activity className="w-5 h-5 text-orange-500" />
             <span className="text-[9px] font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">ACTIVE</span>
           </div>
           <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">System_Load</p>
-          <h3 className="text-3xl font-bold text-white tracking-tighter">0.12</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tighter">0.12</h3>
         </div>
-        <div className="p-8 bg-bg-card border border-border group hover:border-purple-500/40 transition-all">
+        <div className="p-6 md:p-8 bg-bg-card border border-border group hover:border-purple-500/40 transition-all">
           <div className="flex justify-between items-start mb-4">
             <Globe className="w-5 h-5 text-purple-500" />
             <span className="text-[9px] font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">STABLE</span>
           </div>
           <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest mb-1">Edge_Nodes</p>
-          <h3 className="text-3xl font-bold text-white tracking-tighter">14</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tighter">14</h3>
         </div>
       </div>
 
@@ -1025,59 +1042,59 @@ const SystemHealth = () => {
     ];
 
     return (
-        <div className="p-12">
-            <div className="mb-12">
-                <h2 className="text-3xl font-bold text-white tracking-tighter mb-2 uppercase">System Integrity Monitor</h2>
-                <p className="text-xs text-text-muted">Distributed edge node telemetry and regional load distribution.</p>
+        <div className="p-4 md:p-12">
+            <div className="mb-8 md:mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tighter mb-2 uppercase">System Integrity Monitor</h2>
+                <p className="text-[10px] md:text-xs text-text-muted uppercase tracking-widest">Distributed edge node telemetry and regional load distribution.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                <div className="p-8 border border-border bg-bg-card">
-                    <h3 className="text-[10px] font-mono text-accent uppercase tracking-widest mb-8 flex items-center gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
+                <div className="p-6 md:p-8 border border-border bg-bg-card">
+                    <h3 className="text-[10px] font-mono text-accent uppercase tracking-widest mb-6 md:mb-8 flex items-center gap-2 italic">
                         <Globe className="w-3 h-3" /> Regional Topology
                     </h3>
-                    <div className="space-y-6">
+                    <div className="space-y-4 md:space-y-6">
                         {nodes.map(node => (
-                            <div key={node.name} className="flex items-center justify-between p-4 bg-black/40 border border-border/40 hover:border-accent/40 transition-all">
-                                <div>
-                                    <div className="text-[11px] font-bold text-white uppercase">{node.name}</div>
-                                    <div className="text-[9px] font-mono text-gray-500">{node.region}</div>
+                            <div key={node.name} className="flex items-center justify-between p-3 md:p-4 bg-black/40 border border-border/40 hover:border-accent/40 transition-all">
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[10px] md:text-[11px] font-bold text-white uppercase truncate">{node.name}</div>
+                                    <div className="text-[8px] md:text-[9px] font-mono text-gray-500 uppercase">{node.region}</div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right ml-4">
                                     <div className={cn(
-                                        "text-[9px] font-mono uppercase",
+                                        "text-[8px] md:text-[9px] font-mono uppercase",
                                         node.status === 'Healthy' ? "text-accent" : "text-orange-500"
                                     )}>{node.status}</div>
-                                    <div className="text-[10px] text-white font-mono">{node.latency}</div>
+                                    <div className="text-[10px] text-white font-mono shrink-0">{node.latency}</div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="p-8 border border-border bg-bg-card flex flex-col items-center justify-center text-center">
-                    <div className="w-48 h-48 rounded-full border-2 border-accent/20 border-t-accent animate-spin flex items-center justify-center p-4">
-                        <div className="w-32 h-32 rounded-full border border-accent/10 flex items-center justify-center animate-pulse">
-                            <Zap className="w-12 h-12 text-accent" />
+                <div className="p-6 md:p-8 border border-border bg-bg-card flex flex-col items-center justify-center text-center">
+                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border-2 border-accent/20 border-t-accent animate-spin flex items-center justify-center p-4">
+                        <div className="w-20 h-20 md:w-32 md:h-32 rounded-full border border-accent/10 flex items-center justify-center animate-pulse">
+                            <Zap className="w-8 h-8 md:w-12 md:h-12 text-accent" />
                         </div>
                     </div>
-                    <div className="mt-8">
-                        <div className="text-[10px] font-mono text-accent mb-2 uppercase tracking-widest">Global Energy Efficiency</div>
-                        <div className="text-4xl font-bold text-white tracking-tighter">94.2% <span className="text-sm font-normal text-gray-500">OPTIMIZED</span></div>
+                    <div className="mt-6 md:mt-8">
+                        <div className="text-[9px] md:text-[10px] font-mono text-accent mb-2 uppercase tracking-widest">Global Efficiency</div>
+                        <div className="text-2xl md:text-4xl font-bold text-white tracking-tighter">94.2% <span className="text-[10px] md:text-sm font-normal text-gray-500 uppercase">OPTIMIZED</span></div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                  {[
                     { label: 'DB Connections', value: '42 Active', color: 'text-accent' },
                     { label: 'Cache Hit Rate', value: '89.4%', color: 'text-blue-500' },
                     { label: 'Write Latency', value: '1.2ms', color: 'text-accent' },
                     { label: 'Storage Quota', value: '0.02 / 5GB', color: 'text-gray-400' }
                  ].map(stat => (
-                    <div key={stat.label} className="p-6 bg-bg-card border border-border">
-                        <div className="text-[9px] font-mono text-gray-500 uppercase mb-1">{stat.label}</div>
-                        <div className={cn("text-lg font-bold tracking-tight", stat.color)}>{stat.value}</div>
+                    <div key={stat.label} className="p-4 md:p-6 bg-bg-card border border-border">
+                        <div className="text-[8px] md:text-[9px] font-mono text-gray-500 uppercase mb-1">{stat.label}</div>
+                        <div className={cn("text-base md:text-lg font-bold tracking-tight", stat.color)}>{stat.value}</div>
                     </div>
                  ))}
             </div>
@@ -1124,72 +1141,72 @@ const IdentityEditor = () => {
 
     if (loading || !data) {
         return (
-            <div className="p-12 flex items-center justify-center text-accent font-mono text-xs animate-pulse">
+            <div className="p-4 md:p-12 flex items-center justify-center text-accent font-mono text-xs animate-pulse">
                 SYNCING_IDENTITY_MANIFEST...
             </div>
         );
     }
 
     return (
-        <div className="p-12 max-w-4xl">
-            <div className="mb-12">
-                <h2 className="text-3xl font-bold text-white tracking-tighter mb-2 uppercase italic flex items-center gap-4">
-                    <User className="w-8 h-8 text-accent" /> Identity Protocol
+        <div className="p-4 md:p-12 max-w-4xl">
+            <div className="mb-10 md:mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tighter mb-2 uppercase italic flex items-center gap-4">
+                    <User className="w-6 h-6 md:w-8 md:h-8 text-accent" /> Identity Protocol
                 </h2>
-                <p className="text-xs text-text-muted">Modify global system identity, profile assets, and bio signatures.</p>
+                <p className="text-[10px] md:text-xs text-text-muted uppercase tracking-widest">Modify global system identity, profile assets, and bio signatures.</p>
             </div>
 
-            <div className="space-y-8 bg-bg-card border border-border p-12">
-                <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-6 md:space-y-8 bg-bg-card border border-border p-6 md:p-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase">Operator_Legal_Name</label>
+                        <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Operator_Legal_Name</label>
                         <input 
                             type="text" 
                             value={data.memberName || ''} 
                             onChange={e => setData({...data, memberName: e.target.value})}
-                            className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
-                            placeholder="e.g. Etienne Dante"
+                            className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
+                            placeholder="NAME_ID"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase">System_Title</label>
+                        <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">System_Title</label>
                         <input 
                             type="text" 
                             value={data.memberTitle || ''} 
                             onChange={e => setData({...data, memberTitle: e.target.value})}
-                            className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
-                            placeholder="e.g. Fullstack Mobility Engineer"
+                            className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
+                            placeholder="ROLE_PROTOCOL"
                         />
                     </div>
                 </div>
 
-                <div className="flex gap-8">
+                <div className="flex flex-col-reverse md:flex-row gap-8 md:gap-12">
                     <div className="flex-1 space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-mono text-gray-500 uppercase">Hero_Title_Protocol</label>
+                            <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Hero_Title_Protocol</label>
                             <input 
                                 type="text" 
                                 value={data.heroTitle || ''} 
                                 onChange={e => setData({...data, heroTitle: e.target.value})}
-                                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
-                                placeholder="Large heading text (e.g. BUILDING FOR THE NEXT BILLION.)"
+                                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
+                                placeholder="Large heading..."
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-mono text-gray-500 uppercase">Hero_Subtitle_Manifest</label>
+                            <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Hero_Subtitle_Manifest</label>
                             <input 
                                 type="text" 
                                 value={data.heroSubtitle || ''} 
                                 onChange={e => setData({...data, heroSubtitle: e.target.value})}
-                                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-sm"
-                                placeholder="Secondary heading text (e.g. Resilient systems in unstable environments.)"
+                                className="w-full bg-black border border-border p-3 text-white focus:border-accent outline-none text-xs md:text-sm font-mono"
+                                placeholder="Secondary heading..."
                             />
                         </div>
                     </div>
                     
-                    <div className="w-48 space-y-4">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase block text-center">Visual_Identity</label>
-                        <div className="aspect-square bg-black border border-border relative group overflow-hidden">
+                    <div className="w-full md:w-48 space-y-4">
+                        <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase block text-center tracking-widest italic">Identity_Visual</label>
+                        <div className="aspect-square bg-black border border-border relative group overflow-hidden max-w-[200px] mx-auto md:max-w-none">
                             {data.profileImageUrl ? (
                                 <img src={data.profileImageUrl} alt="Identity" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             ) : (
@@ -1226,50 +1243,50 @@ const IdentityEditor = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-mono text-gray-500 uppercase">Biography_Data_Stream</label>
+                    <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest">Biography_Data_Stream</label>
                     <textarea 
                         value={data.aboutText || ''} 
                         onChange={e => setData({...data, aboutText: e.target.value})}
-                        className="w-full bg-black border border-border p-4 text-white focus:border-accent outline-none text-sm min-h-[120px] font-light leading-relaxed no-scrollbar"
+                        className="w-full bg-black border border-border p-4 text-white focus:border-accent outline-none text-xs md:text-sm min-h-[120px] font-light leading-relaxed no-scrollbar font-mono"
                         placeholder="Detailed personal overview and philosophy..."
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-8 border-t border-border pt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-border pt-8">
                     <div className="space-y-4">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase">Communication_Channels</label>
+                        <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest underline decoration-accent/20">Communications</label>
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <span className="text-[9px] font-mono text-gray-700 block tracking-widest uppercase">Direct_Secure_Line (Email)</span>
+                                <span className="text-[8px] md:text-[9px] font-mono text-gray-700 block tracking-widest uppercase italic">Secure_Direct_Line</span>
                                 <input 
                                     type="email" 
                                     value={data.email || ''} 
                                     onChange={e => setData({...data, email: e.target.value})}
-                                    className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-xs"
+                                    className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-xs font-mono"
                                 />
                             </div>
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <label className="text-[10px] font-mono text-gray-500 uppercase">External_Node_Links</label>
-                        <div className="grid grid-cols-1 gap-4">
+                        <label className="text-[9px] md:text-[10px] font-mono text-gray-500 uppercase tracking-widest underline decoration-accent/20">External_Nodes</label>
+                        <div className="grid grid-cols-1 gap-4 font-mono">
                             <input 
-                                type="text" placeholder="GitHub URL"
+                                type="text" placeholder="G_HUB_PATH"
                                 value={data.githubUrl || ''} 
                                 onChange={e => setData({...data, githubUrl: e.target.value})}
-                                className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-xs"
+                                className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-[10px]"
                             />
                             <input 
-                                type="text" placeholder="LinkedIn URL"
+                                type="text" placeholder="L_INK_NODE"
                                 value={data.linkedinUrl || ''} 
                                 onChange={e => setData({...data, linkedinUrl: e.target.value})}
-                                className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-xs"
+                                className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-[10px]"
                             />
                             <input 
-                                type="text" placeholder="Twitter/X URL"
+                                type="text" placeholder="T_WIT_NODE"
                                 value={data.twitterUrl || ''} 
                                 onChange={e => setData({...data, twitterUrl: e.target.value})}
-                                className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-xs"
+                                className="w-full bg-black border-b border-border p-2 text-white focus:border-accent outline-none text-[10px]"
                             />
                         </div>
                     </div>
@@ -1279,7 +1296,7 @@ const IdentityEditor = () => {
                     <button 
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="px-12 py-4 bg-accent text-black font-bold uppercase tracking-[0.3em] text-[11px] hover:bg-white transition-all flex items-center gap-3 disabled:opacity-50"
+                        className="w-full md:w-auto px-10 py-4 bg-accent text-black font-bold uppercase tracking-[0.3em] text-[10px] md:text-[11px] hover:bg-white transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                     >
                         {isSaving ? 'UPLOADING...' : (
                             <>
@@ -1334,17 +1351,17 @@ const FeedbackDashboard = () => {
     }
 
     return (
-        <div className="p-12 max-w-6xl">
-            <div className="mb-12 flex justify-between items-end">
+        <div className="p-4 md:p-12 max-w-6xl">
+            <div className="mb-8 md:mb-12 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
                 <div>
-                    <h2 className="text-3xl font-bold text-white tracking-tighter mb-2 uppercase italic flex items-center gap-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tighter mb-2 uppercase italic flex items-center gap-4">
                         <MessageSquare className="w-8 h-8 text-accent" /> Transmission Log
                     </h2>
-                    <p className="text-xs text-text-muted uppercase font-mono tracking-widest">Intercepted signals from external entities.</p>
+                    <p className="text-[10px] md:text-xs text-text-muted uppercase font-mono tracking-widest">Intercepted signals from external entities.</p>
                 </div>
                 <button 
                     onClick={fetchFeedback}
-                    className="p-3 border border-accent/20 text-accent hover:bg-accent hover:text-black transition-all flex items-center gap-2 text-[10px] font-mono uppercase"
+                    className="w-full md:w-auto p-3 border border-accent/20 text-accent hover:bg-accent hover:text-black transition-all flex items-center justify-center gap-2 text-[10px] font-mono uppercase"
                 >
                     <Activity className="w-3 h-3" /> Refresh_Sync
                 </button>
@@ -1352,41 +1369,38 @@ const FeedbackDashboard = () => {
 
             <div className="space-y-4">
                 {feedback.length === 0 ? (
-                    <div className="p-20 border border-dashed border-border flex flex-col items-center justify-center text-gray-700">
+                    <div className="p-12 md:p-20 border border-dashed border-border flex flex-col items-center justify-center text-gray-700">
                         <MessageSquare className="w-12 h-12 mb-4 opacity-20" />
-                        <span className="text-xs font-mono uppercase tracking-[0.2em]">Zero transmissions detected.</span>
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em]">Zero transmissions detected.</span>
                     </div>
                 ) : (
                     feedback.map((f, i) => (
-                        <div key={f.id} className="bg-bg-card border border-border p-8 group hover:border-accent/30 transition-all relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div key={f.id} className="bg-bg-card border border-border p-6 md:p-8 group hover:border-accent/30 transition-all relative overflow-hidden">
+                            <div className="absolute top-2 right-2 md:top-4 md:right-4 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-[#050505] md:bg-transparent">
                                 <button 
                                     onClick={() => handleDelete(f.id)}
-                                    className="p-2 text-red-500 hover:bg-red-500/10 transition-all"
+                                    className="p-2 text-red-500 hover:bg-red-500/10 transition-all font-mono text-[9px] uppercase border border-red-500/20 md:border-transparent flex items-center gap-2"
                                     title="Purge Transmission"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-3 h-3" /> <span className="md:hidden">Purge</span>
                                 </button>
                             </div>
                             
-                            <div className="flex flex-col md:flex-row gap-8">
-                                <div className="w-48 flex-shrink-0">
-                                    <div className="text-[10px] font-mono text-accent mb-1 uppercase tracking-tighter">Identity_Signature</div>
-                                    <div className="text-sm text-white font-bold truncate mb-4">{f.contact}</div>
+                            <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+                                <div className="w-full md:w-48 flex-shrink-0 md:border-r md:border-border/20 md:pr-8">
+                                    <div className="text-[9px] font-mono text-accent mb-1 uppercase tracking-tighter italic">Identity_Signature</div>
+                                    <div className="text-sm text-white font-bold truncate mb-3 md:mb-4">{f.contact}</div>
                                     
-                                    <div className="text-[9px] font-mono text-gray-600 mb-1 uppercase">Intercept_Time</div>
+                                    <div className="text-[8px] font-mono text-gray-600 mb-1 uppercase tracking-widest">Intercept_Time</div>
                                     <div className="text-[10px] text-gray-500 font-mono">
                                         {f.timestamp?.toDate ? f.timestamp.toDate().toLocaleString() : 'PENDING...'}
                                     </div>
                                 </div>
                                 
                                 <div className="flex-1">
-                                    <div className="text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest">Payload_Data</div>
-                                    <div className="text-sm text-white font-light leading-relaxed whitespace-pre-line bg-black/40 p-6 border border-white/5 italic">
-                                        "{f.message}"
-                                    </div>
-                                    <div className="mt-4 flex gap-4 text-[9px] font-mono text-gray-700 uppercase italic">
-                                        <span>UA: {f.userAgent?.slice(0, 50)}...</span>
+                                    <div className="text-[9px] font-mono text-accent/40 mb-2 uppercase tracking-widest">Data_Payload</div>
+                                    <div className="text-sm md:text-base text-gray-300 font-light leading-relaxed whitespace-pre-wrap font-mono">
+                                        {f.message}
                                     </div>
                                 </div>
                             </div>
